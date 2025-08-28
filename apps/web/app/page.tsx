@@ -9,6 +9,7 @@ import XEditor from "../components/x-editor";
 import NotebookEditor from "../components/notebook-editor";
 import GradientEditor from "../components/gradient-editor";
 import ProfileEditor from "../components/profile-editor";
+
 import { CardSizeProvider } from "@repo/ui/context/CardSizeContext";
 
 const tabs = [
@@ -37,6 +38,7 @@ const tabs = [
     label: "Profile Card",
   },
   
+  
 ];
 
 function HomeContent() {
@@ -60,6 +62,7 @@ function HomeContent() {
         {currentTab === "x" ? <XEditor /> : null}
         {currentTab === "notebook" ? <NotebookEditor /> : null}
         {currentTab === "profile" ? <ProfileEditor /> : null}
+       
       </CardSizeProvider>
     </MainHomeLayout>
   );
