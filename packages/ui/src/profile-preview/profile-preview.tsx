@@ -43,7 +43,14 @@ export const ProfileCardPreview: React.FC<ProfileCardPreviewProps> = ({
       lightMode={true}
       scale={scale}
     >
-      <div className="profile-card-container">
+      <div 
+        className="profile-card-container"
+        style={{
+          backgroundImage: "url('https://copilot.microsoft.com/th/id/BCO.d1f67ba5-9956-4f13-9e9a-7eab0d15cb08.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center"
+        }}
+      >
         <div className="profile-image-section">
           {profileImage ? (
             <img
