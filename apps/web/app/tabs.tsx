@@ -1,4 +1,3 @@
-
 "use client";
 import { MainHomeLayout } from "@repo/web-ui/layout";
 import React, { useCallback, Suspense } from "react";
@@ -7,10 +6,8 @@ import "./page.module.css";
 import QuizMarkdownEditor from "../components/markdown-editor";
 import ChatgptEditor from "../components/chatgpt-editor";
 import XEditor from "../components/x-editor";
-import NotebookEditor from "../components/notebook-editor";
-import GradientEditor from "../components/gradient-editor";
-import ProfileEditor from "../components/profile-editor";
 
+import GradientEditor from "../components/gradient-editor";
 import { CardSizeProvider } from "@repo/ui/context/CardSizeContext";
 
 const tabs = [
@@ -30,19 +27,10 @@ const tabs = [
     key: "x",
     label: "X Card",
   },
-  {
-    key: "notebook",
-    label: "Notebook Card",
-  },
-  {
-    key: "profile",
-    label: "Profile Card",
-  },
-  
-  
+
 ];
 
-function HomeContent() {
+export default function TabContents() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
@@ -61,31 +49,8 @@ function HomeContent() {
         {currentTab === "chatgpt" ? <ChatgptEditor /> : null}
         {currentTab === "gradient" ? <GradientEditor /> : null}
         {currentTab === "x" ? <XEditor /> : null}
-        {currentTab === "notebook" ? <NotebookEditor /> : null}
-        {currentTab === "profile" ? <ProfileEditor /> : null}
-       
       </CardSizeProvider>
     </MainHomeLayout>
-  );
-}
-
-export default function Home() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <HomeContent />
-    </Suspense>
-  );
-}
-
-import { Suspense } from "react";
-import "./page.module.css";
-import TabContents from "./tabs";
-
-export default function Home() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <TabContents />
-    </Suspense>
   );
 }
 
