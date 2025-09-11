@@ -1,19 +1,22 @@
 "use client";
-import { GradientPreview } from "@repo/ui/gradient-preview/gradient-preview";
-import { useContext, useEffect, useState } from "react";
+
+import { NotebookPreview } from "@repo/ui/notebookcard-preview/notebook-preview";
+import { useContext, useEffect, useState, useRef } from "react";
 import { DownloadButton } from "@repo/web-ui/download-button";
-import { CardSizeContext } from "@repo/ui/context/CardSizeContext";
+import {
+  CardSizeContext,
+  CardSizeProvider,
+} from "@repo/ui/context/CardSizeContext";
 import SocialMediaController from "@repo/web-ui/SocialMediaController";
-
-import { Cog, Delete, Move, Package2, Trash2 } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
+import { Trash2 } from "lucide-react";
 import { SliderBox, DrawInput, CheckBox } from "./common";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
+import { Cog, Delete, Move, Package2 } from "lucide-react";
 
-const STORAGE_KEY = "gradient-editor-v1";
+const STORAGE_KEY = "notebookCardv1";
 
-const cardBgColor = "bg-yellow-200";
-const textColor = "text-gray-900";
-const borderColor = "border-gray-300";
+const cardBgColor = "bg-violet-500";
+const textColor = "text-white";
 
 const componentSocialMapping = {
   instagramPost: {
@@ -72,45 +75,38 @@ const componentSocialMapping = {
   },
 };
 
-const gradientTypes = [
-  { label: "Default", value: "default" },
-  { label: "Nano", value: "nano" },
-  { label: "Mini", value: "mini" },
-  { label: "Pink", value: "pink" },
-  { label: "Conic", value: "conic" },
-  { label: "Custom Image", value: "custom" },
-];
-
-export default function GradientEditor() {
+export default function NotebookEditor() {
   const [loaded, setLoaded] = useState(false);
 
   const [state, setState] = useState({
+    previewHeightPixels: 540,
+    previewWidthPixels: 540,
     width: 540,
     height: 540,
     innerPaddingX: 30,
     innerPaddingY: 50,
     scale: 1,
     exportScale: 1,
-    pageName: "@postmaker.dev",
+    pageName: "postmaker.dev",
     logoUrl: "/logo.svg",
     logoUrlLabel: "Created with Postmaker.dev",
-    borderRadius: 0,
+    borderRadius: 8,
     hasCardBorder: false,
     isRtl: false,
-    customImage: "/logo.svg",
-
-    title: "Postmaker.dev",
-    text: `Create Posts`,
-    rounded: true,
-    gradientType: "default",
-    gradientWidth: 0,
-    gradientHeight: 0,
-    blurAmount: 0,
+    title: "Prepare for interviews with ChatGPT",
+    items: [
+      "Generate practice questions",
+      "Talk through your responses",
+      "Practice interview scenarios",
+      "Get ideas to build rapport",
+      "Do a mock interview"
+    ],
+    showCheckboxes: true,
   });
 
   const {
-    width,
-    height,
+    width: width,
+    height: height,
     innerPaddingX,
     innerPaddingY,
     pageName,
@@ -120,15 +116,10 @@ export default function GradientEditor() {
     hasCardBorder,
     isRtl,
     title,
-    rounded,
-    text,
+    items,
+    showCheckboxes,
     scale,
     exportScale,
-    gradientWidth,
-    gradientHeight,
-    gradientType,
-    blurAmount,
-    customImage,
   } = state;
 
   // Load from localStorage on mount
@@ -158,6 +149,22 @@ export default function GradientEditor() {
     setState((prev) => ({ ...prev, [key]: value }));
   };
 
+  const handleItemChange = (index: number, value: string) => {
+    const newItems = [...items];
+    newItems[index] = value;
+    setStateValue("items", newItems);
+  };
+
+  const addItem = () => {
+    setStateValue("items", [...items, "New item"]);
+  };
+
+  const removeItem = (index: number) => {
+    const newItems = [...items];
+    newItems.splice(index, 1);
+    setStateValue("items", newItems);
+  };
+
   return (
     <div className="p-4 flex md:flex-row flex-col gap-2 w-full">
       <div className="min-h-screen preview-left-panel relative">
@@ -167,7 +174,7 @@ export default function GradientEditor() {
         >
           <Trash2 size={16} className="inline-block mr-1" />
         </button>
-        <h2 className="preview-heading">Gradient Card</h2>
+        <h2 className="preview-heading">Notebook Card</h2>
 
         {/* Tabs */}
         <Tabs defaultValue="card" className="w-full">
@@ -183,53 +190,6 @@ export default function GradientEditor() {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="card">
-            {/* gradient types select */}
-            <p>Gradient Type:</p>
-            <select
-              className="w-full px-2 border rounded-md mb-4"
-              value={gradientType}
-              name="gradientType"
-              onChange={(e) => {
-                if (e.target.value === "conic") {
-                  setStateValue("blurAmount", 40);
-                } else {
-                  setStateValue("blurAmount", 0);
-                }
-                setStateValue(e.target.name, e.target.value);
-              }}
-            >
-              {gradientTypes.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </select>
-            {gradientType === "custom" && (
-              <>
-                <DrawInput
-                  keyName="customImage"
-                  value={customImage}
-                  placeholder="Enter custom image URL..."
-                  label="Custom Image URL"
-                  onChange={setStateValue}
-                  isTextArea={false}
-                  className="mt-4"
-                />
-              </>
-            )}
-            {/* Blur Amount */}
-
-            <SliderBox
-              keyName="blurAmount"
-              label="Blur Amount"
-              value={blurAmount || 0}
-              unit="px"
-              min={0}
-              max={100}
-              setStateValue={(name, value) =>
-                setStateValue(name, Number(value))
-              }
-            />
             <DrawInput
               keyName="title"
               value={title}
@@ -240,50 +200,42 @@ export default function GradientEditor() {
               className="mt-4"
             />
 
-            <DrawInput
-              keyName="text"
-              value={text}
-              placeholder="Enter subtitle..."
-              label="Subtitle"
-              onChange={setStateValue}
-              isTextArea={false}
-              className=""
+            <div className="mb-4">
+              <p>Checklist Items:</p>
+              {items.map((item, index) => (
+                <div key={index} className="flex mb-2">
+                  <input
+                    className="flex-1 px-1 border rounded-md mr-2"
+                    value={item}
+                    onChange={(e) => handleItemChange(index, e.target.value)}
+                    placeholder="Enter item text..."
+                  />
+                  <button
+                    onClick={() => removeItem(index)}
+                    className="px-1 bg-red-400 rounded-md hover:bg-red-500"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+              <button
+                onClick={addItem}
+                className="mt-2 px-4 py-1 bg-blue-500 rounded-md hover:bg-blue-700"
+              >
+                Add Item
+              </button>
+            </div>
+
+            <CheckBox
+              keyName="showCheckboxes"
+              value={showCheckboxes}
+              label="Show Checkboxes"
+              setStateValue={setStateValue}
+              widthWrapper={true}
             />
-
-            <div className="flex flex-col mt-4 border p-2 rounded-md">
-              {/* Checkbox */}
-              <CheckBox
-                keyName="rounded"
-                value={rounded}
-                label="Rounded Gradient"
-                setStateValue={setStateValue}
-              />
-            </div>
-
-            <div className="flex flex-col mt-4 border p-2 rounded-md">
-              {/* Slider */}
-              <SliderBox
-                keyName="gradientWidth"
-                label="Gradient Width"
-                value={gradientWidth}
-                unit="px"
-                min={0}
-                max={1920}
-                setStateValue={setStateValue}
-              />
-            </div>
-            <div className="flex flex-col mt-4 border p-2 rounded-md">
-              <SliderBox
-                keyName="gradientHeight"
-                label="Gradient Height"
-                value={gradientHeight}
-                unit="px"
-                min={0}
-                max={1920}
-                setStateValue={setStateValue}
-              />
-            </div>
           </TabsContent>
+
+          {/* Settings and others */}
           <TabsContent value="settings">
             <DrawInput
               keyName="pageName"
@@ -426,26 +378,18 @@ export default function GradientEditor() {
           }}
           className="transition-all duration-200 select-none preview-container-drag"
         >
-          <GradientPreview
+          <NotebookPreview
             logoUrl={logoUrl}
             logoUrlLabel={logoUrlLabel}
             pageName={pageName}
             title={title}
-            text={text}
-            gradientWidth={gradientWidth}
-            gradientHeight={gradientHeight}
-            rounded={rounded}
-            blurAmount={blurAmount}
+            items={items}
+            showCheckboxes={showCheckboxes}
             scale={scale}
-            gradientType={gradientType}
-            customImage={customImage}
             styles={{
               zIndex: 10,
-              // scale: exportScale,
               height: "100%",
               direction: isRtl ? "rtl" : "ltr",
-              backgroundColor: "white",
-              color: "black",
               ...(innerPaddingX
                 ? {
                     paddingLeft: `${innerPaddingX}px`,
@@ -462,12 +406,11 @@ export default function GradientEditor() {
             }}
             className={`w-full ${
               hasCardBorder ? "border" : ""
-            } p-6 shadow-md transition-colors duration-300 ${cardBgColor} ${textColor} ${borderColor}
-          w-full`}
+            } shadow-md transition-colors duration-300 ${cardBgColor} ${textColor}`}
           />
         </div>
       </div>
-      <DownloadButton className="show-mobile bg-black shadow-2xl text-white p-4 rounded-md hover:bg-sky-700" />
+      <DownloadButton className="show-mobile bg-gray-700 shadow-2xl text-white p-4 rounded-md hover:bg-gray-800" />
     </div>
   );
 }

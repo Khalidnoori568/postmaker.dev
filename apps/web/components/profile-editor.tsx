@@ -1,19 +1,22 @@
 "use client";
-import { GradientPreview } from "@repo/ui/gradient-preview/gradient-preview";
-import { useContext, useEffect, useState } from "react";
+
+import { ProfileCardPreview } from "@repo/ui/profile-preview/profile-preview";
+import { useContext, useEffect, useState, useRef } from "react";
 import { DownloadButton } from "@repo/web-ui/download-button";
-import { CardSizeContext } from "@repo/ui/context/CardSizeContext";
+import {
+  CardSizeContext,
+  CardSizeProvider,
+} from "@repo/ui/context/CardSizeContext";
 import SocialMediaController from "@repo/web-ui/SocialMediaController";
-
-import { Cog, Delete, Move, Package2, Trash2 } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
+import { Trash2 } from "lucide-react";
 import { SliderBox, DrawInput, CheckBox } from "./common";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
+import { Cog, Delete, Move, Package2 } from "lucide-react";
 
-const STORAGE_KEY = "gradient-editor-v1";
+const STORAGE_KEY = "profileCardv1";
 
-const cardBgColor = "bg-yellow-200";
-const textColor = "text-gray-900";
-const borderColor = "border-gray-300";
+const cardBgColor = "bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900";
+const textColor = "text-white";
 
 const componentSocialMapping = {
   instagramPost: {
@@ -72,45 +75,34 @@ const componentSocialMapping = {
   },
 };
 
-const gradientTypes = [
-  { label: "Default", value: "default" },
-  { label: "Nano", value: "nano" },
-  { label: "Mini", value: "mini" },
-  { label: "Pink", value: "pink" },
-  { label: "Conic", value: "conic" },
-  { label: "Custom Image", value: "custom" },
-];
-
-export default function GradientEditor() {
+export default function ProfileEditor() {
   const [loaded, setLoaded] = useState(false);
+  const profileImageInputRef = useRef<HTMLInputElement>(null);
 
   const [state, setState] = useState({
+    previewHeightPixels: 540,
+    previewWidthPixels: 540,
     width: 540,
     height: 540,
     innerPaddingX: 30,
     innerPaddingY: 50,
     scale: 1,
     exportScale: 1,
-    pageName: "@postmaker.dev",
+    pageName: "postmaker.dev",
     logoUrl: "/logo.svg",
     logoUrlLabel: "Created with Postmaker.dev",
-    borderRadius: 0,
+    borderRadius: 16,
     hasCardBorder: false,
     isRtl: false,
-    customImage: "/logo.svg",
-
-    title: "Postmaker.dev",
-    text: `Create Posts`,
-    rounded: true,
-    gradientType: "default",
-    gradientWidth: 0,
-    gradientHeight: 0,
-    blurAmount: 0,
+    name: "John Doe",
+    jobTitle: "Senior Designer",
+    description: "Passionate about creating beautiful user experiences and solving complex problems through design. With over 8 years of experience in the industry.",
+    profileImage: "",
   });
 
   const {
-    width,
-    height,
+    width: width,
+    height: height,
     innerPaddingX,
     innerPaddingY,
     pageName,
@@ -119,16 +111,12 @@ export default function GradientEditor() {
     borderRadius,
     hasCardBorder,
     isRtl,
-    title,
-    rounded,
-    text,
+    name,
+    jobTitle,
+    description,
+    profileImage,
     scale,
     exportScale,
-    gradientWidth,
-    gradientHeight,
-    gradientType,
-    blurAmount,
-    customImage,
   } = state;
 
   // Load from localStorage on mount
@@ -158,6 +146,19 @@ export default function GradientEditor() {
     setState((prev) => ({ ...prev, [key]: value }));
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setStateValue("profileImage", event.target.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
     <div className="p-4 flex md:flex-row flex-col gap-2 w-full">
       <div className="min-h-screen preview-left-panel relative">
@@ -167,7 +168,7 @@ export default function GradientEditor() {
         >
           <Trash2 size={16} className="inline-block mr-1" />
         </button>
-        <h2 className="preview-heading">Gradient Card</h2>
+        <h2 className="preview-heading">Profile Card</h2>
 
         {/* Tabs */}
         <Tabs defaultValue="card" className="w-full">
@@ -183,107 +184,76 @@ export default function GradientEditor() {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="card">
-            {/* gradient types select */}
-            <p>Gradient Type:</p>
-            <select
-              className="w-full px-2 border rounded-md mb-4"
-              value={gradientType}
-              name="gradientType"
-              onChange={(e) => {
-                if (e.target.value === "conic") {
-                  setStateValue("blurAmount", 40);
-                } else {
-                  setStateValue("blurAmount", 0);
-                }
-                setStateValue(e.target.name, e.target.value);
-              }}
-            >
-              {gradientTypes.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </select>
-            {gradientType === "custom" && (
-              <>
-                <DrawInput
-                  keyName="customImage"
-                  value={customImage}
-                  placeholder="Enter custom image URL..."
-                  label="Custom Image URL"
-                  onChange={setStateValue}
-                  isTextArea={false}
-                  className="mt-4"
-                />
-              </>
-            )}
-            {/* Blur Amount */}
-
-            <SliderBox
-              keyName="blurAmount"
-              label="Blur Amount"
-              value={blurAmount || 0}
-              unit="px"
-              min={0}
-              max={100}
-              setStateValue={(name, value) =>
-                setStateValue(name, Number(value))
-              }
-            />
             <DrawInput
-              keyName="title"
-              value={title}
-              placeholder="Enter title..."
-              label="Title"
+              keyName="name"
+              value={name}
+              placeholder="Enter name..."
+              label="Name"
               onChange={setStateValue}
               isTextArea={false}
               className="mt-4"
             />
 
             <DrawInput
-              keyName="text"
-              value={text}
-              placeholder="Enter subtitle..."
-              label="Subtitle"
+              keyName="jobTitle"
+              value={jobTitle}
+              placeholder="Enter job title..."
+              label="Job Title"
               onChange={setStateValue}
               isTextArea={false}
-              className=""
+              className="mt-4"
             />
 
-            <div className="flex flex-col mt-4 border p-2 rounded-md">
-              {/* Checkbox */}
-              <CheckBox
-                keyName="rounded"
-                value={rounded}
-                label="Rounded Gradient"
-                setStateValue={setStateValue}
-              />
-            </div>
+            <DrawInput
+              keyName="description"
+              value={description}
+              placeholder="Enter description..."
+              label="Description"
+              onChange={setStateValue}
+              isTextArea={true}
+              className="mt-4"
+            />
 
-            <div className="flex flex-col mt-4 border p-2 rounded-md">
-              {/* Slider */}
-              <SliderBox
-                keyName="gradientWidth"
-                label="Gradient Width"
-                value={gradientWidth}
-                unit="px"
-                min={0}
-                max={1920}
-                setStateValue={setStateValue}
+            {/* Profile Image Upload */}
+            <div className="mb-4">
+              <p>Profile Image:</p>
+              <input
+                type="file"
+                ref={profileImageInputRef}
+                onChange={handleImageUpload}
+                accept="image/*"
+                className="hidden"
               />
-            </div>
-            <div className="flex flex-col mt-4 border p-2 rounded-md">
-              <SliderBox
-                keyName="gradientHeight"
-                label="Gradient Height"
-                value={gradientHeight}
-                unit="px"
-                min={0}
-                max={1920}
-                setStateValue={setStateValue}
-              />
+              <button
+                onClick={() => profileImageInputRef.current?.click()}
+                className="px-2 py-2 rounded-md border hover:bg-gray-50 hover:text-gray-800"
+              >
+                Upload Profile Image
+              </button>
+              {profileImage && (
+                <button
+                  onClick={() => setStateValue("profileImage", "")}
+                  className="ml-2 px-4 py-2 bg-red-400 rounded-md hover:bg-red-500"
+                >
+                  Remove
+                </button>
+              )}
+
+              {profileImage.length < 1000 && (
+                <DrawInput
+                  keyName="profileImage"
+                  value={profileImage}
+                  placeholder="or enter profile image URL..."
+                  label="Or Profile Image URL"
+                  onChange={setStateValue}
+                  isTextArea={false}
+                  className="mt-2"
+                />
+              )}
             </div>
           </TabsContent>
+
+          {/* Settings and others */}
           <TabsContent value="settings">
             <DrawInput
               keyName="pageName"
@@ -426,26 +396,19 @@ export default function GradientEditor() {
           }}
           className="transition-all duration-200 select-none preview-container-drag"
         >
-          <GradientPreview
+          <ProfileCardPreview
             logoUrl={logoUrl}
             logoUrlLabel={logoUrlLabel}
             pageName={pageName}
-            title={title}
-            text={text}
-            gradientWidth={gradientWidth}
-            gradientHeight={gradientHeight}
-            rounded={rounded}
-            blurAmount={blurAmount}
+            name={name}
+            jobTitle={jobTitle}
+            description={description}
+            profileImage={profileImage}
             scale={scale}
-            gradientType={gradientType}
-            customImage={customImage}
             styles={{
               zIndex: 10,
-              // scale: exportScale,
               height: "100%",
               direction: isRtl ? "rtl" : "ltr",
-              backgroundColor: "white",
-              color: "black",
               ...(innerPaddingX
                 ? {
                     paddingLeft: `${innerPaddingX}px`,
@@ -462,12 +425,11 @@ export default function GradientEditor() {
             }}
             className={`w-full ${
               hasCardBorder ? "border" : ""
-            } p-6 shadow-md transition-colors duration-300 ${cardBgColor} ${textColor} ${borderColor}
-          w-full`}
+            } shadow-md transition-colors duration-300 ${cardBgColor} ${textColor}`}
           />
         </div>
       </div>
-      <DownloadButton className="show-mobile bg-black shadow-2xl text-white p-4 rounded-md hover:bg-sky-700" />
+      <DownloadButton className="show-mobile bg-purple-700 shadow-2xl text-white p-4 rounded-md hover:bg-purple-800" />
     </div>
   );
 }
