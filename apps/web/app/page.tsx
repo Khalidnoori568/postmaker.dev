@@ -1,4 +1,3 @@
-
 "use client";
 import { MainHomeLayout } from "@repo/web-ui/layout";
 import React, { useCallback, Suspense } from "react";
@@ -73,18 +72,6 @@ export default function Home() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <HomeContent />
-    </Suspense>
-  );
-}
-
-import { Suspense } from "react";
-import "./page.module.css";
-import TabContents from "./tabs";
-
-export default function Home() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <TabContents />
     </Suspense>
   );
 }
